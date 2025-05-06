@@ -1,4 +1,4 @@
 ## Blog Posts
 
-- [Rust Macros](/rust-macros.html)
+- [Rust Macros](/rust-macros/)
 
