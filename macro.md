@@ -1,3 +1,9 @@
+---
+layout: page
+title: Rust Macros
+permalink: /rust-macros/
+---
+
 #### How I Fell in Love with Rust Procedural Macros
 
 I consider myself a junior Rust developer. I have been learning Rust for a few months now, and I have thoroughly enjoyed
