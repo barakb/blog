@@ -1,7 +1,6 @@
 theme: jekyll-theme-minimal
 title: Barak's Blog
 description: Barak's Blog
-
 markdown: kramdown
 kramdown:
   syntax_highlighter: rouge

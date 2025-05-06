@@ -1,2 +1,4 @@
-# blog
-This is its address https://barakb.github.io/blog/
+## Blog Posts
+
+- [Rust Macros](/rust-macros.html)
+
