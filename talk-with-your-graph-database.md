@@ -3,29 +3,57 @@ layout: default
 title: Talk with a graph
 permalink: /talk-with-your-graph-database/
 ---
-This docker contains falkordb (a very fast in memory graph database) its browser (a web interface for viewing the graph database content) and the text-to-cypher application, an app that enable you to query your graph using free text (answer are in free text as well)
-All the code is open source, I will add link to the github repository at the end.
+# Talk with Your Graph Database: Natural Language Queries with FalkorDB and Text-to-Cypher
 
-for the MCP server to work you will need to supply the .env from your local file (mounted to the docker) with the model and its key
+This project combines FalkorDB, a blazing-fast in-memory graph database, its web-based graph browser, and a powerful **Text-to-Cypher** application that allows you to query your graph database using free-text natural language queries. The answers you receive are also in natural language, lowering the barrier to interact with complex graph data.
 
-Example .env file for text-to-cypher application
+All code is open source, with a link to the GitHub [repository](https://github.com/FalkorDB/text-to-cypher).
+
+## Overview
+
+### What is FalkorDB?
+
+FalkorDB is a high-performance graph database designed to store and query complex relationships and entities efficiently. It supports the Redis protocol, allowing easy integration with existing Redis clients, and uses the Cypher query language to manipulate graph data.
+
+### What is Text-to-Cypher?
+
+Text-to-Cypher is an AI-powered service that translates your natural language questions into Cypher queries automatically. Instead of writing complicated Cypher commands, you simply ask questions like "Who are Eve’s friends?" and get the answer back in plain English.
+
+### Why Use This?
+
+The goal is to empower users to interact with an organization's **local knowledge graph**—a structured representation of data capturing entities and their relationships—without requiring expertise in graph query languages. This can help business users, analysts, or AI assistants unlock valuable insights stored in complex graph structures by speaking the language they naturally use.
+
+---
+
+## How It Works
+
+### Running the Services with Docker
+
+You can run the entire stack easily using Docker. This includes:
+
+- **FalkorDB Graph Database** (port 6379)
+- **Graph Browser Web Interface** (port 3000)
+- **Text-to-Cypher API** for natural language query translation (port 8080)
+- **Model Context Protocol (MCP) Server** for AI assistant integrations (port 3001)
+
+Example command:
+
+```bash
+docker run -p 6379:6379 -p 3000:3000 -p 8080:8080 -p 3001:3001 \ 
+    -v $(pwd)/.env:/app/.env:ro falkordb/text-to-cypher
+```
+Your `.env` file should contain the AI model and key configurations, for example:
+
+```shell
 DEFAULT_MODEL=gpt-4
 DEFAULT_KEY=your-api-key-here
+```
 
 
-docker run -p 6379:6379 -p 3000:3000 -p 8080:8080 -p 3001:3001 \                                git:(master|)
-    -v $(pwd)/.env:/app/.env:ro falkordb/text-to-cypher
-	
-Once running, access the services at:
-- **FalkorDB Database**: `localhost:6379` (Redis protocol)
-- **FalkorDB Web Interface**: `http://localhost:3000` (Interactive graph database browser)
-- **Text-to-Cypher API**: `http://localhost:8080` (REST API)
-- **Swagger UI**: `http://localhost:8080/swagger-ui/` (API documentation)
-- **MCP Server**: `localhost:3001` (Model Context Protocol server)
-- **OpenAPI Spec**: `http://localhost:8080/api-doc/openapi.json`
+### Loading Example Data
 
-loading the graph
-this script load the graph using redis-cli (needed to be installed)
+You can load a sample social network graph using the included bash script with `redis-cli`. This creates people nodes and friend relationships.
+
 
 ```shell
 #!/usr/bin/env bash
@@ -61,16 +89,19 @@ redis-cli GRAPH.QUERY "$GRAPH_NAME" "MATCH (p2:Person {name: 'Bob'}), (p6:Person
 redis-cli GRAPH.QUERY "$GRAPH_NAME" "MATCH (p3:Person {name: 'Carol'}), (p7:Person {name: 'Grace'}) CREATE (p3)-[:FRIEND]->(p7)"
 ```
 
-After the graph is loaded you can browse the web endpoints using the open api at http://localhost:8080/swagger-ui/
-you can edit the parameter for the methods you wish to call for example:
 
-![Open API Edit](screenshots/open_api_edit.png)
+This creates a connected network of people with friend relationships, perfect for testing queries.
 
-And execute the call directly from the open api page:
+### Querying the Graph
 
-![Open API Execute](screenshots/open_api_execute.png)
+You can query the graph through several interfaces:
 
-Alternativly, you can use curl, the -N instruct curl not the buffer the result so you will be able to view the SSE as they arrive from the server
+- **Web UI**: Use the browser at `http://localhost:3000` to visually explore and query the graph.
+- **Text-to-Cypher API**: Send natural language queries via REST API at `http://localhost:8080`.
+- **OpenAPI Swagger UI**: Explore and execute API calls interactively at `http://localhost:8080/swagger-ui/`.
+- **MCP Server**: Integrate with AI assistants that use the Model Context Protocol on port 3001.
+
+Example curl call to get a list of Eve’s friends:
 
 ```shell
 curl -N --http2 -H "Accept:text/event-stream"  -X 'POST' \
@@ -90,88 +121,46 @@ curl -N --http2 -H "Accept:text/event-stream"  -X 'POST' \
 }'
 ```
 
-you will get a response like that:
 
-```shell
-data: {"Status":"Processing query for graph: social using model: gpt-4.1 (OpenAI)"}
+This returns a streaming response with the Cypher query, execution results, and a natural language answer.
 
-data: {"Schema":"{\"entities\":[{\"label\":\"Person\",\"attributes\":[{\"name\":\"name\",\"type\":\"String\"}]}],\"relations\":[{\"label\":\"FRIEND\",\"source\":\"Person\",\"target\":\"Person\"}]}"}
+---
 
-data: {"Status":"Generating Cypher query using schema ..."}
+## Concepts Explained
 
-data: {"CypherQuery":"MATCH (p:Person) WHERE toLower(p.name) = 'eve' MATCH (p)-[f:FRIEND]->(friend:Person) RETURN p, f, friend LIMIT 3"}
+### OpenAPI
 
-data: {"Status":"Executing Cypher query..."}
+OpenAPI is a widely-adopted specification for describing RESTful APIs in a machine-readable format. This allows automatic generation of documentation, client SDKs, and interactive tools like Swagger UI. In this project, the Text-to-Cypher API fully supports OpenAPI, making it easy for developers to discover and test endpoints.
 
-data: {"CypherResult":"1. [(:Person {name: \"Eve\"}), -[:FRIEND]-, (:Person {name: \"Frank\"})]\n2. [(:Person {name: \"Eve\"}), -[:FRIEND]-, (:Person {name: \"Ivan\"})]"}
+![Open API Edit](screenshots/open_api_edit.png)
 
-data: {"Status":"Generating answer from chat history and Cypher output using AI model..."}
+![Open API Execute](screenshots/open_api_execute.png)
 
-data: {"ModelOutputChunk":""}
+### Model Context Protocol (MCP) Server
 
-data: {"ModelOutputChunk":"E"}
+MCP provides a standardized way for AI assistants and tools to interact with APIs and data sources. It supports:
 
-data: {"ModelOutputChunk":"ve"}
+- Listing available graph resources and their schemas
+- Listing and calling tools (like `text_to_cypher`)
+- Streaming responses via Server-Sent Events (SSE)
 
-data: {"ModelOutputChunk":" is"}
+You can connect to MCP using the **MCP Inspector** tool (`npx -y @modelcontextprotocol/inspector`):
 
-data: {"ModelOutputChunk":" friends"}
+![MCP Inspector Connect](screenshots/inspector_connect.png)
+![MCP Inspector List Resources](screenshots/inspector_list_resource.png)
+![MCP Inspector List Tools](screenshots/inspector_list_tools.png)
+![MCP Inspector Run Tool](screenshots/inspector_run_tool.png)
+![MCP Inspector View Resource](screenshots/inspector_view_resource.png)
 
-data: {"ModelOutputChunk":" with"}
+The inspector aggregates streamed events to display the complete response easily.
 
-data: {"ModelOutputChunk":" Frank"}
+Using MCP you can configure text to cypher to be used from Claude destkop or vscode
 
-data: {"ModelOutputChunk":" and"}
+## Integration with Developer Tools and AI Platforms
 
-data: {"ModelOutputChunk":" Ivan"}
+### Using MCP Server with Visual Studio Code
 
-data: {"ModelOutputChunk":"."}
-
-data: {"ModelOutputChunk":" There"}
-
-data: {"ModelOutputChunk":" is"}
-
-data: {"ModelOutputChunk":" no"}
-
-data: {"ModelOutputChunk":" information"}
-
-data: {"ModelOutputChunk":" given"}
-
-data: {"ModelOutputChunk":" about"}
-
-data: {"ModelOutputChunk":" a"}
-
-data: {"ModelOutputChunk":" third"}
-
-data: {"ModelOutputChunk":" friend"}
-
-data: {"ModelOutputChunk":"."}
-
-data: {"Result":"Eve is friends with Frank and Ivan. There is no information given about a third friend."}
-```
-
-
-### MCP 
-
-For the MCP interface you can use the mcp inspector
-npx -y @modelcontextprotocol/inspector
-
-The trasnport type is SSE an the url is http://localhost:3001/sse
-
-with that you can connect to the MCP server
-![Inspector Connect](screenshots/inspector_connect.png)
-you can browse the resources (graphs) and see their schema
-![Inspector List Resource](screenshots/inspector_list_resource.png)
-![Inspector View Resource](screenshots/inspector_view_resource.png)
-
-you can list tools
-![Inspector List Tools](screenshots/inspector_list_tools.png)
-you can call tools
-![Inspector Run Tool](screenshots/inspector_run_tool.png)
-Note that the inspector accomulate the SSE events and show them at the end.
-
-Alternativly you can configure visual code to use this mcp server with this mcp.json file (inside the .vscode directory)
-
+Configure VSCode to connect to the MCP server by adding a configuration file `.vscode/mcp.json`:
 ```json
 {
   "servers": {
@@ -206,3 +195,49 @@ you can do that by add the file `laude_desktop_config.json` to `/Users/$USER/Lib
 Note the claude destop does not stream the SSE event to the user (it buffer the events)
 
 ![Claude Desktop with MCP](screenshots/claude_deskop_mcp.png)
+
+### Server-Sent Events (SSE)
+
+SSE is a protocol that allows servers to push real-time updates to clients over HTTP. Here, SSE is used to stream progressive query processing updates, including:
+
+- Status messages
+- Schema discovery
+- Cypher query generation
+- Query execution results
+- Final natural language answers
+
+This real-time feedback improves user experience, especially for longer or complex queries.
+
+---
+
+
+
+## Potential Use Cases
+
+- **Enterprise Knowledge Management**: Allow employees to query corporate knowledge graphs without knowing query languages.
+- **Customer Support**: AI assistants leverage organizational data to answer customer queries effectively.
+- **Research Data Exploration**: Academics explore complex relationships in research datasets intuitively.
+- **Intelligent Chatbots**: Integrate graph-backed insights into conversational AI for enriched responses.
+- **Custom Analytics Dashboards**: Use natural language queries to build dynamic graph visualizations and reports.
+
+---
+
+## What Can Be Built on Top?
+
+- **Advanced AI Assistants** that integrate multiple data sources and provide context-aware recommendations.
+- **Automated Data Governance Tools** that analyze relationships and data lineage interactively.
+- **Collaboration Platforms** where users query and discuss data insights leveraging the knowledge graph.
+- **Domain-Specific Query Builders** which optimize natural language understanding for specialized vocabularies.
+
+---
+
+## Resources
+
+- GitHub repository: [https://github.com/FalkorDB/text-to-cypher](https://github.com/FalkorDB/text-to-cypher)
+- MCP Inspector: `npx -y @modelcontextprotocol/inspector`
+
+---
+
+Feel free to explore and contribute to this open-source ecosystem, bringing your organization's local knowledge graph interaction to the next level!
+
+
