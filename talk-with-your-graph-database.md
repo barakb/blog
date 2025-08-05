@@ -1,3 +1,8 @@
+---
+layout: default
+title: Talk with a graph
+permalink: /talk-with-your-graph-database/
+---
 This docker contains falkordb (a very fast in memory graph database) its browser (a web interface for viewing the graph database content) and the text-to-cypher application, an app that enable you to query your graph using free text (answer are in free text as well)
 All the code is open source, I will add link to the github repository at the end.
 
