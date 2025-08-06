@@ -52,6 +52,8 @@ With Text-to-Cypher connected to FalkorDB, users and applications can ask comple
 
 ### Running the Services with Docker
 
+The app is written in the Rust programmng langauge and you can build it from [source](https://github.com/FalkorDB/text-to-cypher) on your machine or use pre built [release](https://github.com/FalkorDB/text-to-cypher/releases) 
+
 You can run the entire stack easily using Docker. This includes:
 
 - **FalkorDB Graph Database** (port 6379)
