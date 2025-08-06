@@ -17,15 +17,38 @@ FalkorDB is a high-performance graph database designed to store and query comple
 
 ### What is Text-to-Cypher?
 
-Text-to-Cypher is an AI-powered service that translates your natural language questions into Cypher queries automatically. Instead of writing complicated Cypher commands, you simply ask questions like "Who are Eve’s friends?" and get the answer back in plain English.
+**Text-to-Cypher** is an application that connects to the FalkorDB graph database to enable users to ask questions in natural language and receive answers grounded in graph data. Instead of requiring knowledge of the Cypher query language (used to query property graphs), users simply express their questions in free text, and the system translates them into executable Cypher queries to retrieve corresponding information from the graph.
 
-### Why Use This?
+Text-to-Cypher provides two main interfaces for this:
 
-The goal is to empower users to interact with an organization's **local knowledge graph**—a structured representation of data capturing entities and their relationships—without requiring expertise in graph query languages. This can help business users, analysts, or AI assistants unlock valuable insights stored in complex graph structures by speaking the language they naturally use.
+1. A **direct REST API** that clients can call to submit natural language queries. This API returns progress updates as Server-Sent Events (SSE), allowing clients to receive incremental feedback about schema discovery, query generation, execution, and final results.
+
+2. A **Model Context Protocol (MCP) server**, which hosts the Text-to-Cypher tool and exposes resources representing each graph in the FalkorDB database. MCP provides a standardized interface enabling integration with in-house or third-party MCP-compatible tools and AI assistants.
+
+The advantage of the REST API interface is that it offers tight control and easy integration with existing or legacy software systems that prefer RESTful services and want granular SSE progress updates.
+
+The MCP server, on the other hand, excels in environments where multiple AI assistants or tools interact collaboratively. MCP enables seamless integration, resource discovery, and invocation of the Text-to-Cypher tool alongside other graph-related capabilities, allowing flexible multi-service ecosystems.
+
+With Text-to-Cypher connected to FalkorDB, users and applications can ask complex, multi-hop questions about an organization's knowledge graph—unlocking insights without writing raw Cypher queries.
 
 ---
 
-## How It Works
+### How It Works
+
+1. **Accepting User Free Text Query**: The system accepts a natural language query from the user, optionally including conversational history for context.
+
+2. **Generating Schema for the Graph**: It retrieves the graph schema (node labels, relationships, properties) from FalkorDB and caches it for efficiency.
+
+3. **Generating Cypher Query**: Using the user input and cached schema, the system leverages AI to translate the natural language query into an executable Cypher query.
+
+4. **Executing the Cypher Query**: The generated query is executed against the FalkorDB graph database.
+
+5. **Returning Free Text Answer**: Finally, the system uses both the original user query and the Cypher query results to compose and return a natural language answer.
+
+
+---
+
+## How to use it
 
 ### Running the Services with Docker
 
